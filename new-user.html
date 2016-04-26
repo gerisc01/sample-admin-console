@@ -10,29 +10,39 @@
     <!-- Bootstrap -->
     <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="user-form.css" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+    <script src="consoles.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('form').submit(function() {
+                var match = validatePasswordsMatch($(this));
+                if (match) {
+                    submitNewUser($(this));
+                }
+                return false;
+            });
+        });
+    </script>
 </head>
 <body>
-    <!-- <form method="POST" action="login.php">
-        Username: <input name="username"/>
-        <br/>
-        Password: <input name="password" type="password"/>
-        <input type="submit" value="Submit"/>
-    </form> -->
+    <div id="error"/>
     <div class="container">
-      <form class="form-signin" method="POST" action="create-user.php">
+      <form class="form-signin" action="POST">
         <h2 class="form-signin-heading">Create User</h2>
         <fieldset class="form-group">
             <label for="username">Username</label>
-            <input class="form-control" id="username" placeholder="Username" required autofocus>
+            <input class="form-control" name="username" placeholder="Username" required autofocus>
             <small class="text-muted">Enter a username (must be longer than 6 characters).</small>
         </fieldset>
         <fieldset class="form-group">
             <label for="password">Password</label>
-            <input type="password" class="form-control" id="password" placeholder="Password" required>
-            <input type="password" class="form-control" id="confirm-password" placeholder="Confirm Password" required>
+            <input type="password" class="form-control" name="password" placeholder="Password" required>
+            <input type="password" class="form-control" name="confirm-password" placeholder="Confirm Password" required>
             <small class="text-muted">Enter and confirm your password.</small>
         </fieldset>
-
+        <!-- Defaulting Age to 1 so that we have something to edit in the console -->
+        <input name="age" type="hidden" value="1"/>
+        <input name="new_user" type="hidden" value="true"/>
         <button class="btn btn-lg btn-primary btn-block" type="submit">Create</button>
       </form>
     </div> <!-- /container -->

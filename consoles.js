@@ -1,9 +1,5 @@
 var savedRow = "";
 
-$(document).ready(function() {
-    populateUserTable();
-});
-
 $(document).on('click','.btn.edit',function(){
     editRow($(this).closest("tr"));
 });
@@ -35,6 +31,39 @@ $(document).on('click','.btn.accept',function(){
         }
     });
 });
+
+function submitNewUser(form) {
+    var values = {};
+    form.find('input').each(function() {
+        values[this.name] = $(this).val();
+    });
+
+    $.ajax({
+        type        : 'POST',
+        url         : 'user.php',
+        data        : values,
+        encode      : true
+    })
+    .done(function(data) {
+        try {
+            window.location.replace("/");
+        } catch(e) {
+            $("div#error").html("<h4>"+data+"</h4>");
+        }
+    });
+}
+
+function validatePasswordsMatch(form) {
+    var password = null;
+    form.find('input:password').each(function() {
+        if (password === null) password = $(this).val();
+        if ($(this).val() !== password) {
+            password = null;
+            return false;
+        }
+    });
+    return password === null ? false : true;
+}
 
 function editRow(row) {
     setPreEditRow(row.html());
