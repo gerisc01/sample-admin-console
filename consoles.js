@@ -1,4 +1,5 @@
 var savedRow = "";
+var userSpec = null;
 
 $(document).on('click','.btn.edit',function(){
     editRow($(this).closest("tr"));
@@ -118,15 +119,50 @@ function generateRowFromJson(json) {
     '</tr>';
 }
 
-function populateUserTable() {
-    $.getJSON("users.json", function(json) {
-        var users = json["users"];
-        var table = $('table#users').children("tbody");
-        var i, len;
+function loadAdminData() {
+    $.getJSON("users.spec",loadAdminHeader);
+    $.getJSON("users.json",loadAdminRows);
+}
 
-        for (i = 0, len = json["users"].length; i < len; ++i) {
-            console.log(generateRowFromJson(users[i]));
-            table.append(generateRowFromJson(users[i]));
+// Load Admin header takes the json for the .spec file
+function loadAdminHeader(json) {
+    userSpec = json;
+    var fields = json["fields"];
+    var tr = $('table.admin-data').find('thead tr');
+
+    var i,len;
+    for (i = 0, len = fields.length; i < len; ++i) {
+        if (fields[i]["type"] !== "sensitive") {
+            tr.append('<th>'+capitalizeFirstLetter(fields[i]["name"])+'</th>');
         }
-    });
+    }
+}
+
+// Load Admin header takes the json from the .json data file
+function loadAdminRows(json) {
+    if (userSpec === null) { console.log("loadAdminHeader() didn't load the .spec file into the userData variable"); return; }
+    var rows = json["users"];
+    var table = $('table.admin-data').children("tbody");
+    var fields = userSpec["fields"];
+    
+    for (var i = 0, len = rows.length; i < len; ++i) {
+        var tr = '<tr>';
+        for (var j = 0, fLen = fields.length; j < fLen; ++j) {
+            if (fields[j]["type"] !== "sensitive") {
+                tr += '  <td>'+rows[i][fields[j].name]+'</td>';
+            }
+        }
+        // Add edit button and closing tr tag
+        tr += '  <td>' +
+        '    <button type="button" class="btn btn-default edit" aria-label="Left Align">' +
+        '      <span class="glyphicon glyphicon-pencil" aria-hidden="true"></span>' +
+        '    </button>' +
+        '  </td>' +
+        '</tr>';
+        table.append(tr);
+    }
+}
+
+function capitalizeFirstLetter(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
 }
