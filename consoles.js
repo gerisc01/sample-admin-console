@@ -26,7 +26,7 @@ $(document).on('click','.btn.accept',function(){
     .done(function(data) {
         try {
             json = JSON.parse(data);
-            row.replaceWith(generateRowFromJson(json));
+            row.replaceWith(generateRow(json));
         } catch(e) {
             $("div#error").html("<h4>"+data+"</h4>");
         }
@@ -82,17 +82,28 @@ function setPreEditRow(html) {
 }
 
 function generateEditRow(row) {
+    var fields = userSpec["fields"];
+    var tr = '<tr>';
+
+    // Save the current values from the row
     values = [];
     row.find('td').each(function() {
         values.push($(this).text());
     });
 
-        return '<tr>' +
-    '  <td><input name="username" value="'+values[0]+'"/></td>' +
-    '  <td><input name="name" value="'+values[1]+'"/></td>' +
-    '  <td><input name="email" value="'+values[2]+'"/></td>' +
-    '  <td><input name="age" value="'+values[3]+'"/></td>' +
-    '  <td>' +
+    for (var i = 0, fLen = fields.length; i < fLen; ++i) {
+        var type = fields[i]["type"].toLowerCase();
+        if (type !== "sensitive") {
+            if (type === "string") {
+                tr += '  <td><input name="'+fields[i]["name"]+'" value="'+values.shift()+'"/></td>';
+            } else if (type.slice(0,3) === "int") {
+                tr += '  <td><input type="number" name="'+fields[i]["name"]+'" value="'+values.shift()+'"/></td>';
+            }
+        }
+    }
+
+    // Add buttons and closing td
+    tr += '  <td>' +
     '    <input style="display:none;" name="new_user" value="false"/>' +
     '    <button type="button" class="btn btn-default reject" aria-label="Left Align">' +
     '      <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>' +
@@ -102,26 +113,34 @@ function generateEditRow(row) {
     '    </button>' +
     '  </td>' +
     '</tr>';
+
+    return tr;
 }
 
-function generateRowFromJson(json) {
-    // Assumes the rows are username,name,email,age
-    return '<tr>' +
-    '  <td>'+json["username"]+'</td>' +
-    '  <td>'+json["name"]+'</td>' +
-    '  <td>'+json["email"]+'</td>' +
-    '  <td>'+json["age"]+'</td>' +
-    '  <td>' +
+function generateRow(json) {
+    var fields = userSpec["fields"];
+    var tr = '<tr>';
+    for (var j = 0, fLen = fields.length; j < fLen; ++j) {
+        if (fields[j]["type"] !== "sensitive") {
+            tr += '  <td>'+json[fields[j].name]+'</td>';
+        }
+    }
+    // Add edit button and closing tr tag
+    tr += '  <td>' +
     '    <button type="button" class="btn btn-default edit" aria-label="Left Align">' +
     '      <span class="glyphicon glyphicon-pencil" aria-hidden="true"></span>' +
     '    </button>' +
     '  </td>' +
     '</tr>';
+
+    return tr;
 }
 
 function loadAdminData() {
-    $.getJSON("users.spec",loadAdminHeader);
-    $.getJSON("users.json",loadAdminRows);
+    $.getJSON("users.spec",loadAdminHeader)
+    .then(function() { 
+        $.getJSON("users.json",loadAdminRows);
+    });
 }
 
 // Load Admin header takes the json for the .spec file
@@ -143,22 +162,9 @@ function loadAdminRows(json) {
     if (userSpec === null) { console.log("loadAdminHeader() didn't load the .spec file into the userData variable"); return; }
     var rows = json["users"];
     var table = $('table.admin-data').children("tbody");
-    var fields = userSpec["fields"];
     
     for (var i = 0, len = rows.length; i < len; ++i) {
-        var tr = '<tr>';
-        for (var j = 0, fLen = fields.length; j < fLen; ++j) {
-            if (fields[j]["type"] !== "sensitive") {
-                tr += '  <td>'+rows[i][fields[j].name]+'</td>';
-            }
-        }
-        // Add edit button and closing tr tag
-        tr += '  <td>' +
-        '    <button type="button" class="btn btn-default edit" aria-label="Left Align">' +
-        '      <span class="glyphicon glyphicon-pencil" aria-hidden="true"></span>' +
-        '    </button>' +
-        '  </td>' +
-        '</tr>';
+        var tr = generateRow(rows[i]);
         table.append(tr);
     }
 }
